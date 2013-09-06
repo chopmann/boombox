@@ -303,9 +303,10 @@ def main():
 	  file_counter=file_counter+1
       New_string=True
      
-    if (not menu and (not Rew_pressed and Rew_input) or (not Fwd_pressed and Fwd_input) and menu_items[menu_counter]==files[file_counter]):
+    if (not menu and ((not Rew_pressed and Rew_input) or (not Fwd_pressed and Fwd_input)) and menu_items[menu_counter]==files[file_counter]):
       song_playing=files[file_counter]
       New_playing=True
+      print menu
       pygame.mixer.music.load(path + files[file_counter])
       if(playing):
         pygame.mixer.music.play()
@@ -316,7 +317,7 @@ def main():
       String_showtime =time.time()+1
       Char_counter=0
       New_string=False
-    else:
+    elif(menu or (not menu and not playing)):
       if (time.time()-String_showtime>0.5 and Char_counter<=len(menu_items[menu_counter])-16):
         String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
@@ -327,24 +328,24 @@ def main():
         if (Char_counter>len(menu_items[menu_counter])-16):
  	  Char_counter=0
 	  String_showtime=time.time()+0.5
-    if(not menu and playing):
-      if (New_playing):
+    if (New_playing):
+      lcd_byte(LCD_LINE_1,LCD_CMD)
+      lcd_string(song_playing)
+      String_showtime =time.time()+1
+      char_counter=0
+      New_playing=False
+      print song_playing
+    elif(not menu and playing):
+      if (time.time()-String_showtime>0.5 and Char_counter<=len(song_playing)-16):
+        String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
-        lcd_string(song_playing)
-        String_showtime =time.time()+1
-        char_counter=0
-        New_playing=False
-      else:
-        if (time.time()-String_showtime>0.5 and Char_counter<=len(song_playing)-16):
-          String_showtime=time.time()
-          lcd_byte(LCD_LINE_1,LCD_CMD)
-          lcd_string(song_playing[Char_counter:])
-          Char_counter=Char_counter+1
-          if (Char_counter==1):
-            String_showtime=time.time()+1
-          if (Char_counter>len(song_playing)-16):
-	    Char_counter=0
-	    String_showtime=time.time()+0.5
+        lcd_string(song_playing[Char_counter:])
+        Char_counter=Char_counter+1
+        if (Char_counter==1):
+          String_showtime=time.time()+1
+        if (Char_counter>len(song_playing)-16):
+          Char_counter=0
+          String_showtime=time.time()+0.5
 
     # for Debugging
 #    time2=time.time()

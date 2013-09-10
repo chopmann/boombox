@@ -77,7 +77,7 @@ def main():
   path=MUSIC_DIR
   ############################################### menu arrays initializing
   menu_items=[]
-  menu_items=glob.glob(path+'*')
+  menu_items=sorted(glob.glob(path+'*'))
   change=[]
   if menu_items!=[]:
     for i in range(len(menu_items)):
@@ -105,6 +105,7 @@ def main():
     break
   if (dirs==[]):
     dirs.extend('.')
+  dirs=sorted(dirs)
   print dirs
   # files
   files=[]
@@ -115,6 +116,8 @@ def main():
   for (dirpath, dirnames, filenames) in walk(path):
     filesnames.extend(filenames)
     break
+  files=sorted(files)
+  filesnames=sorted(filesnames)
   change=[]
   for i in range(len(files)):
     if '.' in files[i]:
@@ -216,7 +219,7 @@ def main():
 	  else:
 	    path=path+dirs[dir_counter]+'/'
 	  print path
-          menu_items=['..']+glob.glob(path+'*')
+          menu_items=['..']+sorted(glob.glob(path+'*'))
 	  if path==MUSIC_DIR:
 	    menu_items=glob.glob(path+'*')
 	  change=[]
@@ -246,6 +249,7 @@ def main():
             break
 	  if (dirs==[]):
 	    dirs.extend('.')
+	  dirs=sorted(dirs)
 	  print dirs
           # files
 	  files=[]
@@ -256,6 +260,8 @@ def main():
           for (dirpath, dirnames, filenames) in walk(path):
             filesnames.extend(filenames)
             break
+	  files=sorted(files)
+	  filesnames=sorted(files)
           change=[]
 	  for i in range(len(files)):
 	    if '.' in files[i]:
@@ -338,14 +344,13 @@ def main():
     # Prev
     if (not Rew_pressed and Rew_input):
       print('Rew')
-      print menu
       if (menu_counter==0):
         menu_counter=len(menu_items)-1
         dir_counter =len(dirs)-1
         file_counter=len(files)-1
       else:
         menu_counter=menu_counter-1
-        if (dir_counter!=0 and menu_items[menu_counter]==dirs[dir_counter-1]):
+	if (dir_counter!=0 and menu_items[menu_counter][1:]==dirs[dir_counter-1]):
           dir_counter=dir_counter-1
         elif (file_counter!=0 and menu_items[menu_counter]==files[file_counter-1]):
           file_counter=file_counter-1
@@ -353,14 +358,13 @@ def main():
     # Next
     if (not Fwd_pressed and Fwd_input):
       print('Fwd')
-      print menu
       if (menu_counter==len(menu_items)-1):
 	menu_counter=0
 	dir_counter =0
 	file_counter=0
       else:
 	menu_counter=menu_counter+1
-	if (dir_counter!=len(dirs)-1 and menu_items[menu_counter]==dirs[dir_counter+1]):
+	if (dir_counter!=len(dirs)-1 and menu_items[menu_counter][1:]==dirs[dir_counter+1]):
 	  dir_counter=dir_counter+1
 	elif (file_counter!=len(files)-1 and menu_items[menu_counter]==files[file_counter+1]):
 	  file_counter=file_counter+1
@@ -369,7 +373,6 @@ def main():
     if (not menu and ((not Rew_pressed and Rew_input) or (not Fwd_pressed and Fwd_input)) and menu_items[menu_counter]==files[file_counter]):
       song_playing=files[file_counter]
       New_playing=True
-      print menu
       pygame.mixer.music.load(path + filesnames[file_counter])
       if(playing):
         pygame.mixer.music.play()
@@ -410,18 +413,6 @@ def main():
           Char_counter=0
           String_showtime=time.time()+0.5
 
-    # for Debugging
-#    time2=time.time()
-#    if (time2-time1>4):
-#      print ('--------------')
-#      print ('menu ')
-#      print (menu)
-#      print ('Playing ')
-#      print (playing)
-#      print ('Paused ')
-#      print (paused)
-#      print ('--------------')
-#      time1=time.time()
     Play_pressed=Play_input
     Stop_pressed=Stop_input
     Rew_pressed =Rew_input

@@ -1,4 +1,7 @@
 #First things first:
+#RPi.GPIO:
+# wget http://raspberry-gpio-python.googlecode.com/files/python-rpi.gpio_0.3.1a-1_armhf.deb
+# sudo dpkg -i python-rpi.gpio_0.3.1a-1_armhf.deb
 #eyeD3:
 #  first get setuptools:
 # wget https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.1.tar.gz
@@ -16,7 +19,7 @@ import time
 import pygame.mixer
 from os import walk
 import glob
-#import eyeD3
+from mutagen.id3 import ID3
 GPIO.cleanup()
 GPIO.setwarnings(False)
 # Define GPIO to LCD mapping
@@ -72,17 +75,29 @@ def main():
   # get all files from the directory Music
   # and more
   path=MUSIC_DIR
-  # menu_items
+  ############################################### menu arrays initializing
   menu_items=[]
-  menu_items=glob.glob(path+'*')
+  menu_items=sorted(glob.glob(path+'*'))
   change=[]
-  for i in range(len(menu_items)):
-    menu_items[i]=menu_items[i][len(path):]
-    if '.' in menu_items[i]:
-      if menu_items[i].rsplit('.',1)[1]!='mp3':
-        change.append(i)
+  if menu_items!=[]:
+    for i in range(len(menu_items)):
+      menu_items[i]=menu_items[i][len(path):]
+      if '.' in menu_items[i]:
+        if menu_items[i].rsplit('.',1)[1]!='mp3':
+          change.append(i)
+        else:
+	  audio=ID3(path+menu_items[i])
+	  if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	    menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	  elif (audio.getall('TIT2')!=[]):
+	    menu_items[i]=audio.getall('TIT2')[0][0]
+	  else:
+	    menu_items[i]=menu_items[i].rsplit('.',1)[0]
+      else:
+        menu_items[i]='>'+menu_items[i]
   for i in range(len(change)):
     menu_items.remove(menu_items[change[i]-i])
+  print menu_items
  # dirs
   dirs=[]
   for (dirpath, dirnames, filenames) in walk(path):
@@ -90,21 +105,43 @@ def main():
     break
   if (dirs==[]):
     dirs.extend('.')
+  dirs=sorted(dirs)
+  print dirs
   # files
   files=[]
   for (dirpath, dirnames, filenames) in walk(path):
     files.extend(filenames)
     break
+  filesnames=[]
+  for (dirpath, dirnames, filenames) in walk(path):
+    filesnames.extend(filenames)
+    break
+  files=sorted(files)
+  filesnames=sorted(filesnames)
   change=[]
   for i in range(len(files)):
     if '.' in files[i]:
       if files[i].rsplit('.',1)[1]!='mp3':
         change.append(i)
+      else:
+	audio=ID3(path+files[i])
+	if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	  files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	elif (audio.getall('TIT2')!=[]):
+	  files[i]=audio.getall('TIT2')[0][0]
+	else:
+	  files[i]=files[i].rsplit('.',1)[0]
+    else:
+      change.append(i)
   for i in range(len(change)):
     files.remove(files[change[i]-i])
+    filesnames.remove(filesnames[change[i]-i])
   if (files==[]):
     files.extend('.')
-
+    filesnames.extend('.')
+  print files
+  print filesnames
+################################################## End Menu Arrays
 # First Screen
   lcd_byte(LCD_LINE_1, LCD_CMD)
   lcd_string("")
@@ -114,13 +151,13 @@ def main():
   lcd_byte(LCD_LINE_2, LCD_CMD)
   lcd_string("")
   time.sleep(1)
-  # File selection
   lcd_byte(LCD_LINE_2, LCD_CMD)
   lcd_string('Menu')
   # Menu variables
   menu=True
   playing=False
   paused=False
+  # Button variables
   Play_pressed=False
   Stop_pressed=False
   Rew_pressed =False
@@ -131,14 +168,16 @@ def main():
   Rew_input =False
   Fwd_input =False
   Menu_input=False
+  # Control varabels for correct displaying of strings
   New_string=True
-  menu_counter=0
-  dir_counter =0
-  file_counter=0
   String_showtime =time.time()
   Char_counter=0
   song_playing=''
   New_playing=False
+  # Array counters
+  menu_counter=0
+  dir_counter =0
+  file_counter=0
   # Debug variables
   time1=time.time()
   #####################################While Start
@@ -170,17 +209,17 @@ def main():
 	  lcd_byte(LCD_LINE_2, LCD_CMD)
 	  lcd_string('')
 	  song_playing=files[file_counter]
-	  pygame.mixer.music.load(path + files[file_counter])
+	  pygame.mixer.music.load(path + filesnames[file_counter])
 	  pygame.mixer.music.play()
 	# Dir selected#############
-	elif (menu_items[menu_counter]==dirs[dir_counter] or menu_items[menu_counter]=='..'):
+        elif (menu_items[menu_counter][1:]==dirs[dir_counter] or menu_items[menu_counter]=='..'):
 	  # Change path
 	  if menu_items[menu_counter]=='..':
 	    path=path.rsplit('/',2)[0]+'/'
 	  else:
 	    path=path+dirs[dir_counter]+'/'
 	  print path
-          menu_items=['..']+glob.glob(path+'*')
+          menu_items=['..']+sorted(glob.glob(path+'*'))
 	  if path==MUSIC_DIR:
 	    menu_items=glob.glob(path+'*')
 	  change=[]
@@ -190,7 +229,17 @@ def main():
 	      if '.' in menu_items[i]:
 		if menu_items[i].rsplit('.',1)[1]!='mp3':
 		  change.append(i)
-	  for i in range(len(change)):
+	        else:
+	          audio=ID3(path+menu_items[i])
+	          if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	            menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	          elif (audio.getall('TIT2')!=[]):
+	            menu_items[i]=audio.getall('TIT2')[0][0]
+	          else:
+	            menu_items[i]=menu_items[i].rsplit('.',1)[0]
+	      else:
+		menu_items[i]='>'+menu_items[i]
+          for i in range(len(change)):
 	    menu_items.remove(menu_items[change[i]-i])
           # dirs
 	  print menu_items
@@ -200,22 +249,42 @@ def main():
             break
 	  if (dirs==[]):
 	    dirs.extend('.')
+	  dirs=sorted(dirs)
 	  print dirs
           # files
 	  files=[]
           for (dirpath, dirnames, filenames) in walk(path):
 	    files.extend(filenames)
             break
-	  change=[]
+	  filesnames=[]
+          for (dirpath, dirnames, filenames) in walk(path):
+            filesnames.extend(filenames)
+            break
+	  files=sorted(files)
+	  filesnames=sorted(files)
+          change=[]
 	  for i in range(len(files)):
 	    if '.' in files[i]:
 	      if files[i].rsplit('.',1)[1]!='mp3':
                 change.append(i)
+	      else:
+	        audio=ID3(path+files[i])
+                if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	          files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	        elif (audio.getall('TIT2')!=[]):
+	          files[i]=audio.getall('TIT2')[0][0]
+	        else:
+	          files[i]=files[i].rsplit('.',1)[0]
+            else:
+	      change.append(i)
 	  for i in range(len(change)):
 	    files.remove(files[change[i]-i])
+	    filesnames.remove(filesnames[change[i]-i])
           if (files==[]):
 	    files.extend('.')
+	    filesnames.extend('.')
 	  print files
+	  print filesnames
 	  New_string=True
 	  menu_counter=0
 	  dir_counter =0
@@ -253,7 +322,7 @@ def main():
 	elif (not playing and not paused):
 	  playing=True
 	  song_playing=files[file_counter]
-	  pygame.mixer.music.load(path + files[file_counter])
+	  pygame.mixer.music.load(path + filesnames[file_counter])
 	  pygame.mixer.music.play()
       # Stop
       if (not Stop_pressed and Stop_input):
@@ -275,14 +344,13 @@ def main():
     # Prev
     if (not Rew_pressed and Rew_input):
       print('Rew')
-      print menu
       if (menu_counter==0):
         menu_counter=len(menu_items)-1
         dir_counter =len(dirs)-1
         file_counter=len(files)-1
       else:
         menu_counter=menu_counter-1
-        if (dir_counter!=0 and menu_items[menu_counter]==dirs[dir_counter-1]):
+	if (dir_counter!=0 and menu_items[menu_counter][1:]==dirs[dir_counter-1]):
           dir_counter=dir_counter-1
         elif (file_counter!=0 and menu_items[menu_counter]==files[file_counter-1]):
           file_counter=file_counter-1
@@ -290,23 +358,22 @@ def main():
     # Next
     if (not Fwd_pressed and Fwd_input):
       print('Fwd')
-      print menu
       if (menu_counter==len(menu_items)-1):
 	menu_counter=0
 	dir_counter =0
 	file_counter=0
       else:
 	menu_counter=menu_counter+1
-	if (dir_counter!=len(dirs)-1 and menu_items[menu_counter]==dirs[dir_counter+1]):
+	if (dir_counter!=len(dirs)-1 and menu_items[menu_counter][1:]==dirs[dir_counter+1]):
 	  dir_counter=dir_counter+1
 	elif (file_counter!=len(files)-1 and menu_items[menu_counter]==files[file_counter+1]):
 	  file_counter=file_counter+1
       New_string=True
      
-    if (not menu and (not Rew_pressed and Rew_input) or (not Fwd_pressed and Fwd_input) and menu_items[menu_counter]==files[file_counter]):
+    if (not menu and ((not Rew_pressed and Rew_input) or (not Fwd_pressed and Fwd_input)) and menu_items[menu_counter]==files[file_counter]):
       song_playing=files[file_counter]
       New_playing=True
-      pygame.mixer.music.load(path + files[file_counter])
+      pygame.mixer.music.load(path + filesnames[file_counter])
       if(playing):
         pygame.mixer.music.play()
     # Displaying of all Strings:    
@@ -316,7 +383,7 @@ def main():
       String_showtime =time.time()+1
       Char_counter=0
       New_string=False
-    else:
+    elif(menu or (not menu and not playing)):
       if (time.time()-String_showtime>0.5 and Char_counter<=len(menu_items[menu_counter])-16):
         String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
@@ -327,37 +394,25 @@ def main():
         if (Char_counter>len(menu_items[menu_counter])-16):
  	  Char_counter=0
 	  String_showtime=time.time()+0.5
-    if(not menu and playing):
-      if (New_playing):
+    if (playing and New_playing):
+      lcd_byte(LCD_LINE_1,LCD_CMD)
+      lcd_string(song_playing)
+      String_showtime =time.time()+1
+      char_counter=0
+      New_playing=False
+      print song_playing
+    elif(not menu and playing):
+      if (time.time()-String_showtime>0.5 and Char_counter<=len(song_playing)-16):
+        String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
-        lcd_string(song_playing)
-        String_showtime =time.time()+1
-        char_counter=0
-        New_playing=False
-      else:
-        if (time.time()-String_showtime>0.5 and Char_counter<=len(song_playing)-16):
-          String_showtime=time.time()
-          lcd_byte(LCD_LINE_1,LCD_CMD)
-          lcd_string(song_playing[Char_counter:])
-          Char_counter=Char_counter+1
-          if (Char_counter==1):
-            String_showtime=time.time()+1
-          if (Char_counter>len(song_playing)-16):
-	    Char_counter=0
-	    String_showtime=time.time()+0.5
+        lcd_string(song_playing[Char_counter:])
+        Char_counter=Char_counter+1
+        if (Char_counter==1):
+          String_showtime=time.time()+1
+        if (Char_counter>len(song_playing)-16):
+          Char_counter=0
+          String_showtime=time.time()+0.5
 
-    # for Debugging
-#    time2=time.time()
-#    if (time2-time1>4):
-#      print ('--------------')
-#      print ('menu ')
-#      print (menu)
-#      print ('Playing ')
-#      print (playing)
-#      print ('Paused ')
-#      print (paused)
-#      print ('--------------')
-#      time1=time.time()
     Play_pressed=Play_input
     Stop_pressed=Stop_input
     Rew_pressed =Rew_input

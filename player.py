@@ -97,6 +97,8 @@ def main():
         menu_items[i]='>'+menu_items[i]
   for i in range(len(change)):
     menu_items.remove(menu_items[change[i]-i])
+  if menu_items==[]:
+    menu_items.extend('..')
   print menu_items
  # dirs
   dirs=[]
@@ -112,12 +114,11 @@ def main():
   for (dirpath, dirnames, filenames) in walk(path):
     files.extend(filenames)
     break
+  files=sorted(files)
   filesnames=[]
   for (dirpath, dirnames, filenames) in walk(path):
     filesnames.extend(filenames)
     break
-  files=sorted(files)
-  filesnames=sorted(filesnames)
   change=[]
   for i in range(len(files)):
     if '.' in files[i]:
@@ -136,6 +137,8 @@ def main():
   for i in range(len(change)):
     files.remove(files[change[i]-i])
     filesnames.remove(filesnames[change[i]-i])
+  print files
+  print filesnames
   if (files==[]):
     files.extend('.')
     filesnames.extend('.')
@@ -180,6 +183,7 @@ def main():
   file_counter=0
   # Debug variables
   time1=time.time()
+  pygame.mixer.music.set_volume(1)
   #####################################While Start
   while True:
     #get_IO()
@@ -219,12 +223,9 @@ def main():
 	  else:
 	    path=path+dirs[dir_counter]+'/'
 	  print path
-          menu_items=['..']+sorted(glob.glob(path+'*'))
-	  if path==MUSIC_DIR:
-	    menu_items=glob.glob(path+'*')
+          menu_items=sorted(glob.glob(path+'*'))
 	  change=[]
           for i in range(len(menu_items)):            
-	    if menu_items[i]!='..':
 	      menu_items[i]=menu_items[i][len(path):]
 	      if '.' in menu_items[i]:
 		if menu_items[i].rsplit('.',1)[1]!='mp3':
@@ -241,6 +242,8 @@ def main():
 		menu_items[i]='>'+menu_items[i]
           for i in range(len(change)):
 	    menu_items.remove(menu_items[change[i]-i])
+	  if menu_items==[]:
+	    menu_items.append('..')
           # dirs
 	  print menu_items
 	  dirs=[]
@@ -291,10 +294,80 @@ def main():
 	  file_counter=0
       # Stop
       if (not Stop_pressed and Stop_input):
-        print ('Stop')
-	playing=False
-	paused=False
-        pygame.mixer.music.stop()
+	print('Stop')
+	if path!=MUSIC_DIR:
+	# Change path
+	  path=path.rsplit('/',2)[0]+'/'
+	  print path
+          menu_items=sorted(glob.glob(path+'*'))
+	  change=[]
+          for i in range(len(menu_items)):            
+	    menu_items[i]=menu_items[i][len(path):]
+	    if '.' in menu_items[i]:
+	      if menu_items[i].rsplit('.',1)[1]!='mp3':
+		change.append(i)
+	      else:
+	        audio=ID3(path+menu_items[i])
+	        if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	          menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	        elif (audio.getall('TIT2')!=[]):
+	          menu_items[i]=audio.getall('TIT2')[0][0]
+	        else:
+	          menu_items[i]=menu_items[i].rsplit('.',1)[0]
+	    else:
+	      menu_items[i]='>'+menu_items[i]
+          for i in range(len(change)):
+	    menu_items.remove(menu_items[change[i]-i])
+	  if menu_items==[]:
+	    menu_items.append('..')
+          # dirs
+	  print menu_items
+	  dirs=[]
+          for (dirpath, dirnames, filenames) in walk(path):
+            dirs.extend(dirnames)
+            break
+	  if (dirs==[]):
+	    dirs.extend('.')
+	  dirs=sorted(dirs)
+	  print dirs
+          # files
+	  files=[]
+          for (dirpath, dirnames, filenames) in walk(path):
+	    files.extend(filenames)
+            break
+	  filesnames=[]
+          for (dirpath, dirnames, filenames) in walk(path):
+            filesnames.extend(filenames)
+            break
+	  files=sorted(files)
+	  filesnames=sorted(files)
+          change=[]
+	  for i in range(len(files)):
+	    if '.' in files[i]:
+	      if files[i].rsplit('.',1)[1]!='mp3':
+                change.append(i)
+	      else:
+	        audio=ID3(path+files[i])
+                if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	          files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	        elif (audio.getall('TIT2')!=[]):
+	          files[i]=audio.getall('TIT2')[0][0]
+	        else:
+	          files[i]=files[i].rsplit('.',1)[0]
+            else:
+	      change.append(i)
+	  for i in range(len(change)):
+	    files.remove(files[change[i]-i])
+	    filesnames.remove(filesnames[change[i]-i])
+          if (files==[]):
+	    files.extend('.')
+	    filesnames.extend('.')
+	  print files
+	  print filesnames
+	  New_string=True
+	  menu_counter=0
+	  dir_counter =0
+	  file_counter=0
       # Menu
       if (not Menu_pressed and Menu_input):
 	print ('Menu')
@@ -319,7 +392,7 @@ def main():
 	  playing=True
 	  paused=False
 	  pygame.mixer.music.unpause()
-	elif (not playing and not paused):
+	elif (not playing and not paused and filesnames[file_counter]!='.'):
 	  playing=True
 	  song_playing=files[file_counter]
 	  pygame.mixer.music.load(path + filesnames[file_counter])

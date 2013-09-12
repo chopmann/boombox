@@ -16,7 +16,7 @@
 #import
 import RPi.GPIO as GPIO
 import time
-import pygame.mixer
+import pygame
 from os import walk
 import glob
 from mutagen.id3 import ID3
@@ -70,8 +70,6 @@ def main():
   GPIO.setup(MENU, GPIO.IN)    # -------------
   # Initialise display
   lcd_init()
-  # Initialise pygame.mixer
-  pygame.mixer.init()
   # get all files from the directory Music
   # and more
   path=MUSIC_DIR
@@ -148,12 +146,15 @@ def main():
 # First Screen
   lcd_byte(LCD_LINE_1, LCD_CMD)
   lcd_string("")
-  lcd_byte(LCD_LINE_2, LCD_CMD)
   lcd_byte(LCD_LINE_1, LCD_CMD)
   lcd_string("Welcome")
   lcd_byte(LCD_LINE_2, LCD_CMD)
   lcd_string("")
-  time.sleep(1)
+  # Initialise pygame.mixer
+  pygame.mixer.init()
+  pygame.init()
+  pygame.mixer.music.set_endevent(1)
+  time.sleep(0.5)
   lcd_byte(LCD_LINE_2, LCD_CMD)
   lcd_string('Menu')
   # Menu variables
@@ -175,12 +176,14 @@ def main():
   New_string=True
   String_showtime =time.time()
   Char_counter=0
-  song_playing=''
+  songs_playing=[]
+  song_display=[]
   New_playing=False
   # Array counters
   menu_counter=0
   dir_counter =0
   file_counter=0
+  song_counter=0
   # Debug variables
   time1=time.time()
   pygame.mixer.music.set_volume(1)
@@ -212,8 +215,13 @@ def main():
 	  menu=False
 	  lcd_byte(LCD_LINE_2, LCD_CMD)
 	  lcd_string('')
-	  song_playing=files[file_counter]
-	  pygame.mixer.music.load(path + filesnames[file_counter])
+	  songs_playing=[]
+	  song_display=[]
+	  for i in range(len(files)):
+	    songs_playing.append(path+filesnames[i])
+            song_display.append(files[i])
+	  song_counter=file_counter
+	  pygame.mixer.music.load(songs_playing[song_counter])
 	  pygame.mixer.music.play()
 	# Dir selected#############
         elif (menu_items[menu_counter][1:]==dirs[dir_counter] or menu_items[menu_counter]=='..'):
@@ -417,38 +425,49 @@ def main():
     # Prev
     if (not Rew_pressed and Rew_input):
       print('Rew')
-      if (menu_counter==0):
-        menu_counter=len(menu_items)-1
-        dir_counter =len(dirs)-1
-        file_counter=len(files)-1
+      if (not menu and playing):
+	if (song_counter == 0):
+	  song_counter=len(songs_playing) -1
+	else:
+	  song_counter=song_counter-1
+	pygame.mixer.music.load(songs_playing[song_counter])
+	pygame.mixer.music.play()
+	New_playing=True
       else:
-        menu_counter=menu_counter-1
-	if (dir_counter!=0 and menu_items[menu_counter][1:]==dirs[dir_counter-1]):
-          dir_counter=dir_counter-1
-        elif (file_counter!=0 and menu_items[menu_counter]==files[file_counter-1]):
-          file_counter=file_counter-1
-      New_string=True
+	if (menu_counter==0):
+          menu_counter=len(menu_items)-1
+          dir_counter =len(dirs)-1
+          file_counter=len(files)-1
+        else:
+          menu_counter=menu_counter-1
+	  if (dir_counter!=0 and menu_items[menu_counter][1:]==dirs[dir_counter-1]):
+            dir_counter=dir_counter-1
+          elif (file_counter!=0 and menu_items[menu_counter]==files[file_counter-1]):
+            file_counter=file_counter-1
+        New_string=True
     # Next
     if (not Fwd_pressed and Fwd_input):
       print('Fwd')
-      if (menu_counter==len(menu_items)-1):
-	menu_counter=0
-	dir_counter =0
-	file_counter=0
+      if (not menu and playing):
+	if (song_counter == len(songs_playing)-1):
+	  song_counter=0
+	else:
+	  song_counter=song_counter+1
+	pygame.mixer.music.load(songs_playing[song_counter])
+	pygame.mixer.music.play()
+	New_playing=True
       else:
-	menu_counter=menu_counter+1
-	if (dir_counter!=len(dirs)-1 and menu_items[menu_counter][1:]==dirs[dir_counter+1]):
-	  dir_counter=dir_counter+1
-	elif (file_counter!=len(files)-1 and menu_items[menu_counter]==files[file_counter+1]):
-	  file_counter=file_counter+1
-      New_string=True
-     
-    if (not menu and ((not Rew_pressed and Rew_input) or (not Fwd_pressed and Fwd_input)) and menu_items[menu_counter]==files[file_counter]):
-      song_playing=files[file_counter]
-      New_playing=True
-      pygame.mixer.music.load(path + filesnames[file_counter])
-      if(playing):
-        pygame.mixer.music.play()
+        if (menu_counter==len(menu_items)-1):
+	  menu_counter=0
+	  dir_counter =0
+	  file_counter=0
+        else:
+	  menu_counter=menu_counter+1
+	  if (dir_counter!=len(dirs)-1 and menu_items[menu_counter][1:]==dirs[dir_counter+1]):
+	    dir_counter=dir_counter+1
+	  elif (file_counter!=len(files)-1 and menu_items[menu_counter]==files[file_counter+1]):
+	    file_counter=file_counter+1
+        New_string=True
     # Displaying of all Strings:    
     if (New_string):
       lcd_byte(LCD_LINE_1,LCD_CMD)
@@ -467,24 +486,33 @@ def main():
         if (Char_counter>len(menu_items[menu_counter])-16):
  	  Char_counter=0
 	  String_showtime=time.time()+0.5
-    if (playing and New_playing):
+    if (playing and New_playing and not menu):
       lcd_byte(LCD_LINE_1,LCD_CMD)
-      lcd_string(song_playing)
+      lcd_string(song_display[song_counter])
       String_showtime =time.time()+1
-      char_counter=0
+      Char_counter=0
       New_playing=False
-      print song_playing
+      print song_display[song_counter]
     elif(not menu and playing):
-      if (time.time()-String_showtime>0.5 and Char_counter<=len(song_playing)-16):
+      if (time.time()-String_showtime>0.5 and Char_counter<=len(song_display[song_counter])-16):
         String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
-        lcd_string(song_playing[Char_counter:])
+        lcd_string(song_display[song_counter][Char_counter:])
         Char_counter=Char_counter+1
         if (Char_counter==1):
           String_showtime=time.time()+1
-        if (Char_counter>len(song_playing)-16):
+        if (Char_counter>len(song_display[song_counter])-16):
           Char_counter=0
           String_showtime=time.time()+0.5
+    if len(pygame.event.get())!=0:
+      if song_counter==len(songs_playing)-1:
+        song_counter=0
+      else:
+        song_counter=song_counter + 1
+      print song_counter
+      pygame.mixer.music.load(songs_playing[song_counter])
+      pygame.mixer.music.play()
+      New_playing=True
 
     Play_pressed=Play_input
     Stop_pressed=Stop_input

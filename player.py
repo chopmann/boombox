@@ -71,78 +71,13 @@ def main():
   # Initialise path
   path=MUSIC_DIR
   ############################################### menu arrays initializing
-  menu_items=[] #what will be shown on the LCD screen when in menu
-  menu_items=sorted(glob.glob(path+'*')) #gets everything out of the directory specified by path
-  change=[]#array needed for cleaning up other arrays
-  if menu_items!=[]:
-    for i in range(len(menu_items)):
-      menu_items[i]=menu_items[i][len(path):] #delets the path from every item
-      if '.' in menu_items[i]:
-        if menu_items[i].rsplit('.',1)[1]!='mp3': 
-          change.append(i) #puts every file which doesnt end with .mp3 in the change array to be deleted later
-        else:
-	  audio=ID3(path+menu_items[i]) #needed to get metadata
-	  # making the Items look nice
-	  if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	    menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0] # if there is a interpret and title it prints both
-	  elif (audio.getall('TIT2')!=[]):
-	    menu_items[i]=audio.getall('TIT2')[0][0] # if there is just a title it just print that
-	  else:
-	    menu_items[i]=menu_items[i].rsplit('.',1)[0] # if there is nothing it will print the filename without .mp3
-      else:
-        menu_items[i]='>'+menu_items[i] # puts a > in front of every directory
-  for i in range(len(change)):
-    menu_items.remove(menu_items[change[i]-i]) # deletes all items cliped in the change array
-  if menu_items==[]:
-    menu_items.extend('..') #if the directory specified by path is empty it will put the item '..' in the array, so its not empty
-  print menu_items
- # dirs
-  dirs=[]
-  # puts all directories in the directory specified by path in the array dirs
-  for (dirpath, dirnames, filenames) in walk(path): 
-    dirs.extend(dirnames)
-    break
-  if (dirs==[]):
-    dirs.extend('.') #fills the array so its not empty if there is no directory
-  dirs=sorted(dirs) 
-  print dirs
+  menu_items=get_menu_items(path) #what will be shown on the LCD screen when in menu
+  # dirs
+  dirs=get_dirs(path)
   # files
-  files=[]
-  # puts all files in the arrays files and filesnames
-  for (dirpath, dirnames, filenames) in walk(path):
-    files.extend(filenames)
-    break
-  files=sorted(files)
-  filesnames=[]
-  for (dirpath, dirnames, filenames) in walk(path):
-    filesnames.extend(filenames)
-    break
-  change=[]
-  # this for loop has the same function as with menu_items. look above
-  for i in range(len(files)):
-    if '.' in files[i]:
-      if files[i].rsplit('.',1)[1]!='mp3':
-        change.append(i)
-      else:
-	audio=ID3(path+files[i])
-	if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	  files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
-	elif (audio.getall('TIT2')!=[]):
-	  files[i]=audio.getall('TIT2')[0][0]
-	else:
-	  files[i]=files[i].rsplit('.',1)[0]
-    else:
-      change.append(i)
-  for i in range(len(change)):# cleans both files and filesnames
-    files.remove(files[change[i]-i])
-    filesnames.remove(filesnames[change[i]-i])
-  print files
-  print filesnames
-  if (files==[]):# fills the arrays so they're not empty if there is no file
-    files.extend('.')
-    filesnames.extend('.')
-  print files
-  print filesnames
+  files=get_files(path)
+  # filesnames
+  filesnames=get_filesnames(path)
 ################################################## End Menu Arrays
 # First Screen
   lcd_byte(LCD_LINE_1, LCD_CMD)
@@ -232,79 +167,21 @@ def main():
 	  pygame.mixer.music.load(songs_playing[song_counter])
 	  pygame.mixer.music.play()
 	# Dir selected#############
-        elif (menu_items[menu_counter][1:]==dirs[dir_counter] or menu_items[menu_counter]=='..'):
+        elif (menu_items[menu_counter][1:]==dirs[dir_counter] or (menu_items[menu_counter]=='..' and path != MUSIC_DIR)):
 	  # Change path
-	  if menu_items[menu_counter]=='..':
+	  if menu_items[menu_counter]=='..' and path!=MUSIC_DIR:
 	    path=path.rsplit('/',2)[0]+'/'
 	  else:
 	    path=path+dirs[dir_counter]+'/'
 	  print path
 	  # same as the initial filling of menu_items, dirs, files and filesnames in line 77 to 145
-          menu_items=sorted(glob.glob(path+'*'))
-	  change=[]
-          for i in range(len(menu_items)):            
-	      menu_items[i]=menu_items[i][len(path):]
-	      if '.' in menu_items[i]:
-		if menu_items[i].rsplit('.',1)[1]!='mp3':
-		  change.append(i)
-	        else:
-	          audio=ID3(path+menu_items[i])
-	          if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	            menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
-	          elif (audio.getall('TIT2')!=[]):
-	            menu_items[i]=audio.getall('TIT2')[0][0]
-	          else:
-	            menu_items[i]=menu_items[i].rsplit('.',1)[0]
-	      else:
-		menu_items[i]='>'+menu_items[i]
-          for i in range(len(change)):
-	    menu_items.remove(menu_items[change[i]-i])
-	  if menu_items==[]:
-	    menu_items.append('..')
-          # dirs
-	  print menu_items
-	  dirs=[]
-          for (dirpath, dirnames, filenames) in walk(path):
-            dirs.extend(dirnames)
-            break
-	  if (dirs==[]):
-	    dirs.extend('.')
-	  dirs=sorted(dirs)
-	  print dirs
-          # files
-	  files=[]
-          for (dirpath, dirnames, filenames) in walk(path):
-	    files.extend(filenames)
-            break
-	  filesnames=[]
-          for (dirpath, dirnames, filenames) in walk(path):
-            filesnames.extend(filenames)
-            break
-	  files=sorted(files)
-	  filesnames=sorted(files)
-          change=[]
-	  for i in range(len(files)):
-	    if '.' in files[i]:
-	      if files[i].rsplit('.',1)[1]!='mp3':
-                change.append(i)
-	      else:
-	        audio=ID3(path+files[i])
-                if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	          files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
-	        elif (audio.getall('TIT2')!=[]):
-	          files[i]=audio.getall('TIT2')[0][0]
-	        else:
-	          files[i]=files[i].rsplit('.',1)[0]
-            else:
-	      change.append(i)
-	  for i in range(len(change)):
-	    files.remove(files[change[i]-i])
-	    filesnames.remove(filesnames[change[i]-i])
-          if (files==[]):
-	    files.extend('.')
-	    filesnames.extend('.')
-	  print files
-	  print filesnames
+          menu_items=get_menu_items(path)
+	  # dirs
+	  dirs=get_dirs(path)
+	  # files
+	  files=get_files(path)
+	  # filesnames
+	  filesnames=get_filesnames(path)
 	  New_string=True
 	  menu_counter=0
 	  dir_counter =0
@@ -316,72 +193,14 @@ def main():
 	# Change path
 	  path=path.rsplit('/',2)[0]+'/'
 	  print path
-	  # same as the initall filling of menu_items
-          menu_items=sorted(glob.glob(path+'*'))
-	  change=[]
-          for i in range(len(menu_items)):            
-	    menu_items[i]=menu_items[i][len(path):]
-	    if '.' in menu_items[i]:
-	      if menu_items[i].rsplit('.',1)[1]!='mp3':
-		change.append(i)
-	      else:
-	        audio=ID3(path+menu_items[i])
-	        if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	          menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
-	        elif (audio.getall('TIT2')!=[]):
-	          menu_items[i]=audio.getall('TIT2')[0][0]
-	        else:
-	          menu_items[i]=menu_items[i].rsplit('.',1)[0]
-	    else:
-	      menu_items[i]='>'+menu_items[i]
-          for i in range(len(change)):
-	    menu_items.remove(menu_items[change[i]-i])
-	  if menu_items==[]:
-	    menu_items.append('..')
+	  # menu_items
+	  menu_items=get_menu_items(path)
           # dirs
-	  print menu_items
-	  dirs=[]
-          for (dirpath, dirnames, filenames) in walk(path):
-            dirs.extend(dirnames)
-            break
-	  if (dirs==[]):
-	    dirs.extend('.')
-	  dirs=sorted(dirs)
-	  print dirs
-          # files
-	  files=[]
-          for (dirpath, dirnames, filenames) in walk(path):
-	    files.extend(filenames)
-            break
-	  filesnames=[]
-          for (dirpath, dirnames, filenames) in walk(path):
-            filesnames.extend(filenames)
-            break
-	  files=sorted(files)
-	  filesnames=sorted(files)
-          change=[]
-	  for i in range(len(files)):
-	    if '.' in files[i]:
-	      if files[i].rsplit('.',1)[1]!='mp3':
-                change.append(i)
-	      else:
-	        audio=ID3(path+files[i])
-                if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	          files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
-	        elif (audio.getall('TIT2')!=[]):
-	          files[i]=audio.getall('TIT2')[0][0]
-	        else:
-	          files[i]=files[i].rsplit('.',1)[0]
-            else:
-	      change.append(i)
-	  for i in range(len(change)):
-	    files.remove(files[change[i]-i])
-	    filesnames.remove(filesnames[change[i]-i])
-          if (files==[]):
-	    files.extend('.')
-	    filesnames.extend('.')
-	  print files
-	  print filesnames
+	  dirs=get_dirs(path)
+	  # files
+	  files=get_files(path)
+	  # filesnames
+	  filesnames=get_filesnames(path)
 	  New_string=True
 	  menu_counter=0
 	  dir_counter =0
@@ -407,13 +226,17 @@ def main():
 	  paused=True
 	  pygame.mixer.music.pause()
 	elif (playing and paused):
-	  playing=True
 	  paused=False
 	  pygame.mixer.music.unpause()
 	elif (not playing and not paused and filesnames[file_counter]!='.'):
 	  playing=True
-	  song_playing=files[file_counter]
-	  pygame.mixer.music.load(path + filesnames[file_counter])
+	  songs_playing=[]
+	  song_display=[]
+	  for i in range(len(files)):
+	    songs_playing.append(path+filesnames[i])
+            song_display.append(files[i])
+	  song_counter=file_counter
+	  pygame.mixer.music.load(songs_playing[song_counter])
 	  pygame.mixer.music.play()
       # Stop
       if (not Stop_pressed and Stop_input):
@@ -455,6 +278,9 @@ def main():
           elif (file_counter!=0 and menu_items[menu_counter]==files[file_counter-1]):
             file_counter=file_counter-1
         New_string=True
+      print file_counter
+      print dir_counter
+      print menu_counter
     # Next
     if (not Fwd_pressed and Fwd_input):
       print('Fwd')
@@ -498,7 +324,7 @@ def main():
       Char_counter=0
       New_string=False
     elif(menu or (not menu and not playing)):
-      if (time.time()-String_showtime>0.5 and Char_counter<=len(menu_items[menu_counter])-16):
+      if (time.time()-String_showtime>0.3 and Char_counter<=len(menu_items[menu_counter])-16):
         String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
         lcd_string(menu_items[menu_counter][Char_counter:])
@@ -516,7 +342,7 @@ def main():
       New_playing=False
       print song_display[song_counter]
     elif(not menu and playing):
-      if (time.time()-String_showtime>0.5 and Char_counter<=len(song_display[song_counter])-16):
+      if (time.time()-String_showtime>0.3 and Char_counter<=len(song_display[song_counter])-16):
         String_showtime=time.time()
         lcd_byte(LCD_LINE_1,LCD_CMD)
         lcd_string(song_display[song_counter][Char_counter:])
@@ -552,7 +378,7 @@ def button_input(button):
   else:
     return GPIO.input(button)
 
-def get_menu_items(path)
+def get_menu_items(path):
   menu_items=[] #what will be shown on the LCD screen when in menu
   menu_items=sorted(glob.glob(path+'*')) #gets everything out of the directory specified by path
   change=[]#array needed for cleaning up other arrays
@@ -563,36 +389,26 @@ def get_menu_items(path)
         if menu_items[i].rsplit('.',1)[1]!='mp3': 
           change.append(i) #puts every file which doesnt end with .mp3 in the change array to be deleted later
         else:
-	  audio=ID3(path+menu_items[i]) #needed to get metadata
-	  # making the Items look nice
-	  if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	    menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0] # if there is a interpret and title it prints both
-	  elif (audio.getall('TIT2')!=[]):
-	    menu_items[i]=audio.getall('TIT2')[0][0] # if there is just a title it just print that
-	  else:
-	    menu_items[i]=menu_items[i].rsplit('.',1)[0] # if there is nothing it will print the filename without .mp3
+	  menu_items[i]=get_metadata(menu_items[i],path)
       else:
         menu_items[i]='>'+menu_items[i] # puts a > in front of every directory
-  for i in range(len(change)):
-    menu_items.remove(menu_items[change[i]-i]) # deletes all items cliped in the change array
-  if menu_items==[]:
-    menu_items.extend('..') #if the directory specified by path is empty it will put the item '..' in the array, so its not empty
+  menu_items=clean_array(menu_items,change,'..') #if the directory specified by path is empty it will put the item '..' in the array, so its not empty
   print menu_items
   return menu_items
 
-def get_dirs(path)
+def get_dirs(path):
   dirs=[]
   # puts all directories in the directory specified by path in the array dirs
   for (dirpath, dirnames, filenames) in walk(path): 
     dirs.extend(dirnames)
     break
-  if (dirs==[]):
-    dirs.extend('.') #fills the array so its not empty if there is no directory
+  change=[]
+  dirs=clean_array(dirs,change,'.')
   dirs=sorted(dirs)
   print dirs
   return dirs
 
-def get_files(path)
+def get_files(path):
   files=[]
   # puts all files in the arrays files and filesnames
   for (dirpath, dirnames, filenames) in walk(path):
@@ -606,41 +422,47 @@ def get_files(path)
       if files[i].rsplit('.',1)[1]!='mp3':
         change.append(i)
       else:
-	audio=ID3(path+files[i])
-	if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
-	  files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
-	elif (audio.getall('TIT2')!=[]):
-	  files[i]=audio.getall('TIT2')[0][0]
-	else:
-	  files[i]=files[i].rsplit('.',1)[0]
+	files[i]=get_metadata(files[i],path)
     else:
       change.append(i)
-  for i in range(len(change)):# cleans both files and filesnames
-    files.remove(files[change[i]-i])
-  print files
-  if (files==[]):# fills the array so it's not empty if there is no file
-    files.extend('.')
+  files=clean_array(files,change,'.')
   print files
   return files
 
-def get_filesnames(path)
+def get_filesnames(path):
   filesnames=[]
   for (dirpath, dirnames, filenames) in walk(path):
     filesnames.extend(filenames)
     break
   filesnames=sorted(filesnames)
+  change=[]
   for i in range(len(filesnames)):
     if '.' in filesnames[i]:
       if filesnames[i].rsplit('.',1)[1]!='mp3':
 	change.append(i)
     else: 
       change.append(i)
-  for i in range(len(change)):
-    filesnames.remove(filesnames[change[i]-i])
-  if (filesnames==[]):
-    filesnames.extend('.')
+  filesnames=clean_array(filesnames,change,'.')
   print filesnames
   return filesnames
+
+def clean_array(array,change,replace_string):
+  for i in range(len(change)):
+    array.remove(array[change[i]-i])
+  if (array==[]):
+    array.append(replace_string)
+  return array
+
+def get_metadata(song,path):
+  audio=ID3(path+song) #needed to get metadata
+  # making the Items look nice
+  if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+    song=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0] # if there is a interpret and title it prints both
+  elif (audio.getall('TIT2')!=[]):
+    song=audio.getall('TIT2')[0][0] # if there is just a title it just print that
+  else:
+    song=song.rsplit('.',1)[0] # if there is nothing it will print the filename without .mp3
+  return song
 
 def lcd_init():
   # Initialise display

@@ -551,6 +551,97 @@ def button_input(button):
     return not GPIO.input(button)
   else:
     return GPIO.input(button)
+
+def get_menu_items(path)
+  menu_items=[] #what will be shown on the LCD screen when in menu
+  menu_items=sorted(glob.glob(path+'*')) #gets everything out of the directory specified by path
+  change=[]#array needed for cleaning up other arrays
+  if menu_items!=[]:
+    for i in range(len(menu_items)):
+      menu_items[i]=menu_items[i][len(path):] #delets the path from every item
+      if '.' in menu_items[i]:
+        if menu_items[i].rsplit('.',1)[1]!='mp3': 
+          change.append(i) #puts every file which doesnt end with .mp3 in the change array to be deleted later
+        else:
+	  audio=ID3(path+menu_items[i]) #needed to get metadata
+	  # making the Items look nice
+	  if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	    menu_items[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0] # if there is a interpret and title it prints both
+	  elif (audio.getall('TIT2')!=[]):
+	    menu_items[i]=audio.getall('TIT2')[0][0] # if there is just a title it just print that
+	  else:
+	    menu_items[i]=menu_items[i].rsplit('.',1)[0] # if there is nothing it will print the filename without .mp3
+      else:
+        menu_items[i]='>'+menu_items[i] # puts a > in front of every directory
+  for i in range(len(change)):
+    menu_items.remove(menu_items[change[i]-i]) # deletes all items cliped in the change array
+  if menu_items==[]:
+    menu_items.extend('..') #if the directory specified by path is empty it will put the item '..' in the array, so its not empty
+  print menu_items
+  return menu_items
+
+def get_dirs(path)
+  dirs=[]
+  # puts all directories in the directory specified by path in the array dirs
+  for (dirpath, dirnames, filenames) in walk(path): 
+    dirs.extend(dirnames)
+    break
+  if (dirs==[]):
+    dirs.extend('.') #fills the array so its not empty if there is no directory
+  dirs=sorted(dirs)
+  print dirs
+  return dirs
+
+def get_files(path)
+  files=[]
+  # puts all files in the arrays files and filesnames
+  for (dirpath, dirnames, filenames) in walk(path):
+    files.extend(filenames)
+    break
+  files=sorted(files)
+  change=[]
+  # this for loop has the same function as with menu_items. look above
+  for i in range(len(files)):
+    if '.' in files[i]:
+      if files[i].rsplit('.',1)[1]!='mp3':
+        change.append(i)
+      else:
+	audio=ID3(path+files[i])
+	if (audio.getall('TIT2')!=[] and audio.getall('TPE1')!=[]):
+	  files[i]=audio.getall('TIT2')[0][0]+' by '+audio.getall('TPE1')[0][0]
+	elif (audio.getall('TIT2')!=[]):
+	  files[i]=audio.getall('TIT2')[0][0]
+	else:
+	  files[i]=files[i].rsplit('.',1)[0]
+    else:
+      change.append(i)
+  for i in range(len(change)):# cleans both files and filesnames
+    files.remove(files[change[i]-i])
+  print files
+  if (files==[]):# fills the array so it's not empty if there is no file
+    files.extend('.')
+  print files
+  return files
+
+def get_filesnames(path)
+  filesnames=[]
+  for (dirpath, dirnames, filenames) in walk(path):
+    filesnames.extend(filenames)
+    break
+  filesnames=sorted(filesnames)
+  for i in range(len(filesnames)):
+    if '.' in filesnames[i]:
+      if filesnames[i].rsplit('.',1)[1]!='mp3':
+	change.append(i)
+    else: 
+      change.append(i)
+  for i in range(len(change)):
+    filesnames.remove(filesnames[change[i]-i])
+  if (filesnames==[]):
+    filesnames.extend('.')
+  print filesnames
+  return filesnames
+
 def lcd_init():
   # Initialise display
   lcd_byte(0x33,LCD_CMD)

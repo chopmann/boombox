@@ -16,6 +16,7 @@ import RPi.GPIO as GPIO
 import time
 import pygame
 from os import walk
+from os import system
 import glob
 from mutagen.id3 import ID3
 GPIO.cleanup()
@@ -52,20 +53,7 @@ MUSIC_DIR='/home/pi/Music/'
 def main():
   # Main program block
   # Initialising GPIO pins
-  GPIO.setmode(GPIO.BOARD)     # Use BOARD numbers
-  GPIO.setup(LCD_E, GPIO.OUT)  # E
-  GPIO.setup(LCD_RS, GPIO.OUT) # RS
-  GPIO.setup(LCD_D4, GPIO.OUT) # DB4
-  GPIO.setup(LCD_D5, GPIO.OUT) # DB5
-  GPIO.setup(LCD_D6, GPIO.OUT) # DB6
-  GPIO.setup(LCD_D7, GPIO.OUT) # DB7
-  GPIO.setup(PLAY, GPIO.IN)    # ---Buttons---
-  GPIO.setup(STOP, GPIO.IN)    #
-  GPIO.setup(REW, GPIO.IN)     #
-  GPIO.setup(FWD, GPIO.IN)     #
-  GPIO.setup(VOL_UP, GPIO.IN)  #
-  GPIO.setup(VOL_DOWN, GPIO.IN)#
-  GPIO.setup(MENU, GPIO.IN)    # -------------
+  GPIO_init()
   # Initialise display
   lcd_init()
   # Initialise path
@@ -138,13 +126,15 @@ def main():
     Vol_up_input   = button_input(VOL_UP)
     Vol_down_input = button_input(VOL_DOWN)
     # End Program button:
-    if (Menu_input and Play_input):
+    if (Fwd_input and Play_input and Rew_input and not Rew_pressed):
       lcd_byte(LCD_LINE_1,LCD_CMD)
       lcd_string('')
       lcd_byte(LCD_LINE_2,LCD_CMD)
       lcd_string('')
       break
-    
+    if (Play_input and Stop_input and Menu_input and not Play_input):
+      system("init 0")
+      break
     if (menu):
       lcd_byte(LCD_LINE_2,LCD_CMD)
       lcd_string('Menu')
@@ -278,9 +268,6 @@ def main():
           elif (file_counter!=0 and menu_items[menu_counter]==files[file_counter-1]):
             file_counter=file_counter-1
         New_string=True
-      print file_counter
-      print dir_counter
-      print menu_counter
     # Next
     if (not Fwd_pressed and Fwd_input):
       print('Fwd')
@@ -463,6 +450,21 @@ def get_metadata(song,path):
   else:
     song=song.rsplit('.',1)[0] # if there is nothing it will print the filename without .mp3
   return song
+def GPIO_init():
+  GPIO.setmode(GPIO.BOARD)     # Use BOARD numbers
+  GPIO.setup(LCD_E, GPIO.OUT)  # E
+  GPIO.setup(LCD_RS, GPIO.OUT) # RS
+  GPIO.setup(LCD_D4, GPIO.OUT) # DB4
+  GPIO.setup(LCD_D5, GPIO.OUT) # DB5
+  GPIO.setup(LCD_D6, GPIO.OUT) # DB6
+  GPIO.setup(LCD_D7, GPIO.OUT) # DB7
+  GPIO.setup(PLAY, GPIO.IN)    # ---Buttons---
+  GPIO.setup(STOP, GPIO.IN)    #
+  GPIO.setup(REW, GPIO.IN)     #
+  GPIO.setup(FWD, GPIO.IN)     #
+  GPIO.setup(VOL_UP, GPIO.IN)  #
+  GPIO.setup(VOL_DOWN, GPIO.IN)#
+  GPIO.setup(MENU, GPIO.IN)    # -------------
 
 def lcd_init():
   # Initialise display

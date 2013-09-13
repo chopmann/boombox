@@ -21,12 +21,12 @@ from mutagen.id3 import ID3
 GPIO.cleanup()
 GPIO.setwarnings(False)
 # Define GPIO to LCD mapping
-LCD_RS   = 26
-LCD_E    = 24
-LCD_D4   = 22 
-LCD_D5   = 18
-LCD_D6   = 12
-LCD_D7   = 10
+LCD_RS   = 12
+LCD_E    = 16
+LCD_D4   = 18 
+LCD_D5   = 22
+LCD_D6   = 24
+LCD_D7   = 26
 # Buttons
 PLAY     = 11
 STOP     = 7
@@ -541,6 +541,8 @@ def main():
     Rew_pressed =Rew_input
     Fwd_pressed =Fwd_input
     Menu_pressed=Menu_input
+    Vol_up_pressed=Vol_up_input
+    Vol_down_pressed=Vol_down_input
     time.sleep(0.05)
  ############################While End
 ###################################End main####################################### 

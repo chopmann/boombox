@@ -132,7 +132,7 @@ def main():
       lcd_byte(LCD_LINE_2,LCD_CMD)
       lcd_string('')
       break
-    if (Play_input and Stop_input and Menu_input and not Play_input):
+    if (Play_input and Stop_input and Menu_input and not Play_pressed):
       system("init 0")
       break
     if (menu):

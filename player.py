@@ -26,19 +26,19 @@ def main():
     GPIO.cleanup()       # clean up GPIO on CTRL+C exit 
 
 # Callbacks
-def play():
+def play(channel):
   print "play callback"
-def stop():
+def stop(channel):
   print "stop callback"
-def menu():
+def menu(channel):
   print "menu callback"
-def fwd():
+def fwd(channel):
   print "fwd callback"
-def rew():
+def rew(channel):
   print "rew callback"
-def vol_up():
+def vol_up(channel):
   print "vol_up callback"
-def vol_down():
+def vol_down(channel):
   print "vol_down callback"
 
 # TODO: Put All of this on it's own Class!

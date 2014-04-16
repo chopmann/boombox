@@ -13,11 +13,16 @@ GPIO.setwarnings(False)
 
 MUSIC_DIR='/home/pi/Music/'
 
-
+current_state = 
 def main():
   GPIO_init()
   GPIO.add_event_detect(BTNS.PLAY, GPIO.FALLING, callback=play, bouncetime=300)
   GPIO.add_event_detect(BTNS.STOP, GPIO.FALLING, callback=stop, bouncetime=300)
+  GPIO.add_event_detect(BTNS.MENU, GPIO.FALLING, callback=menu, bouncetime=300)
+  GPIO.add_event_detect(BTNS.FWD, GPIO.FALLING, callback=fwd, bouncetime=300)
+  GPIO.add_event_detect(BTNS.REW, GPIO.FALLING, callback=rew, bouncetime=300)
+  GPIO.add_event_detect(BTNS.VOL_UP, GPIO.FALLING, callback=vol_up, bouncetime=300)
+  GPIO.add_event_detect(BTNS.VOL_DOWN, GPIO.FALLING, callback=vol_down, bouncetime=300)
   try:
     print "Starting Program"
     while True:

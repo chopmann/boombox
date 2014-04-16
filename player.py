@@ -13,6 +13,7 @@ GPIO.setwarnings(False)
 
 MUSIC_DIR='/home/pi/Music/'
 
+menu_mode = False
 
 def main():
   GPIO_init()
@@ -33,18 +34,48 @@ def main():
 # Callbacks
 def play(channel):
   print "play callback"
+  if not menu_mode:
+    print "Normal Mode: Play/Pause"
+  else:
+    print "Menu Mode: Select/Enter"
 def stop(channel):
   print "stop callback"
+  if not menu_mode:
+    print "Normal Mode: Stop"
+  else:
+    print "Menu Mode: ?"
 def menu(channel):
   print "menu callback"
+  if not menu_mode:
+    print "Normal Mode: Enter Menu"
+    menu_mode = True
+  else:
+    print "Menu Mode: Exit Menu"
+    menu_mode = False
 def fwd(channel):
   print "fwd callback"
+  if not menu_mode:
+    print "Normal Mode: Next Song"
+  else:
+    print "Menu Mode: Navigation Down"
 def rew(channel):
   print "rew callback"
+  if not menu_mode:
+    print "Normal Mode: Previous Song"
+  else:
+    print "Menu Mode: Navigation Up"
 def vol_up(channel):
   print "vol_up callback"
+  if not menu_mode:
+    print "Normal Mode: Volumen Up"
+  else:
+    print "Menu Mode: --"
 def vol_down(channel):
   print "vol_down callback"
+  if not menu_mode:
+    print "Normal Mode: Volume Up"
+  else:
+    print "Menu Mode: ?"
 
 # TODO: Put All of this on it's own Class!
 def GPIO_init():

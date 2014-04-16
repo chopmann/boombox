@@ -1,0 +1,13 @@
+#First things first:
+#RPi.GPIO:
+# wget http://raspberry-gpio-python.googlecode.com/files/python-rpi.gpio_0.3.1a-1_armhf.deb
+# sudo dpkg -i python-rpi.gpio_0.3.1a-1_armhf.deb
+#mutagen:
+# wget https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.1.tar.gz
+# tar -zxvf setuptools-1.1.1.tar.gz
+# cd ~/setuptools-1.1.1
+# sudo python setup.py install
+# sudo apt-get install mercurial
+# hg clone https://code.google.com/p/mutagen
+# cd ~/mutagen
+# sudo python setup.py install

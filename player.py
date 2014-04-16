@@ -9,21 +9,19 @@ from pygame import mixer
 from os import walk
 from os import system
 
-
-GPIO.cleanup()
 GPIO.setwarnings(False)
 
 MUSIC_DIR='/home/pi/Music/'
 
 
-
 def main():
   GPIO_init()
   GPIO.add_event_detect(BTNS.PLAY, GPIO.FALLING, callback=play, bouncetime=300)
-  GPIO.add_event_detect(BTNS.STOP, GPIO.FALLING, callback=play, bouncetime=300)
+  GPIO.add_event_detect(BTNS.STOP, GPIO.FALLING, callback=stop, bouncetime=300)
   try:
     print "Starting Program"
-    GPIO.wait_for_interrupts()
+    while True:
+      time.sleep(1)
   except KeyboardInterrupt:  
     GPIO.cleanup()       # clean up GPIO on CTRL+C exit 
 

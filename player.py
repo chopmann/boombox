@@ -13,7 +13,7 @@ GPIO.setwarnings(False)
 
 MUSIC_DIR='/home/pi/Music/'
 
-current_state = 
+
 def main():
   GPIO_init()
   GPIO.add_event_detect(BTNS.PLAY, GPIO.FALLING, callback=play, bouncetime=300)
